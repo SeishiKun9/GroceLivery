@@ -486,6 +486,13 @@ function renderCheckoutPage() {
         <p>Your cart is empty. Add items before checking out.</p>
       </div>
     `;
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      setFormMessage(messageNode, 'Add grocery items to your cart before checkout.', 'error');
+      showToast('Your cart is empty.');
+    });
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
     return;
   }
 
@@ -592,6 +599,7 @@ function renderCheckoutPage() {
             id: `GL-${Date.now()}`,
             referenceId: data.referenceId,
             paymentSessionId: data.paymentSessionId,
+            checkoutUrl: data.checkoutUrl,
             customer: name,
             email,
             total: data.amount,
@@ -677,6 +685,12 @@ function renderOrdersPage() {
           <div>
             <span class="status-badge ${order.status === 'Paid' ? 'status-paid' : 'status-pending'}">${order.status}</span>
             <div class="order-meta" style="margin-top: 0.5rem; text-align: right;">${formatCurrency(order.total)}</div>
+            ${order.status === 'Pending' ? `
+              <div class="order-actions">
+                ${order.checkoutUrl ? `<a class="button button-secondary order-verify" href="${order.checkoutUrl}" target="_blank" rel="noopener noreferrer">Continue payment</a>` : ''}
+                ${order.paymentSessionId ? `<a class="button button-secondary order-verify" href="orders.html?reference_id=${encodeURIComponent(order.referenceId)}&payment=success">Verify payment</a>` : ''}
+              </div>
+            ` : ''}
           </div>
         </article>
       `

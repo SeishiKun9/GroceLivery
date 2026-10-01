@@ -88,52 +88,59 @@ app.post('/api/payments/create-session', async (req, res) => {
     });
   }
 
-  let returnUrl;
+  let returnUrl = null;
   try {
     const origin = req.get('origin');
     const appOrigin = new URL(origin || '');
+    const localHttpOrigin = appOrigin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(appOrigin.hostname);
 
-    if (appOrigin.protocol !== 'https:' || appOrigin.origin !== origin || appOrigin.host.toLowerCase() !== req.get('host')?.toLowerCase()) {
-      return res.status(503).json({ message: 'Open checkout from the public HTTPS storefront to use Xendit.' });
+    if ((!localHttpOrigin && appOrigin.protocol !== 'https:') || appOrigin.origin !== origin || appOrigin.host.toLowerCase() !== req.get('host')?.toLowerCase()) {
+      return res.status(503).json({ message: 'Open checkout from localhost or the public HTTPS storefront to use Xendit.' });
     }
 
-    returnUrl = new URL('/orders.html', appOrigin.origin);
+    if (appOrigin.protocol === 'https:') {
+      returnUrl = new URL('/orders.html', appOrigin.origin);
+      returnUrl.searchParams.set('reference_id', referenceId);
+    }
   } catch {
-    return res.status(503).json({ message: 'Open checkout from the public HTTPS storefront to use Xendit.' });
+    return res.status(503).json({ message: 'Open checkout from localhost or the public HTTPS storefront to use Xendit.' });
   }
 
-  returnUrl.searchParams.set('reference_id', referenceId);
-
   try {
+    const sessionRequest = {
+      reference_id: referenceId,
+      session_type: 'PAY',
+      mode: 'PAYMENT_LINK',
+      amount,
+      currency: 'PHP',
+      country: 'PH',
+      capture_method: 'AUTOMATIC',
+      locale: 'en',
+      description: `GroceLiver order for ${normalizedName}`,
+      items: validatedItems.map((item) => ({
+        reference_id: String(item.id),
+        type: 'PHYSICAL_PRODUCT',
+        name: item.name,
+        category: item.category,
+        net_unit_amount: item.price,
+        quantity: item.quantity,
+        currency: 'PHP'
+      })),
+      metadata: { order_reference: referenceId }
+    };
+
+    if (returnUrl) {
+      sessionRequest.success_return_url = `${returnUrl.toString()}&payment=success`;
+      sessionRequest.cancel_return_url = `${returnUrl.toString()}&payment=cancel`;
+    }
+
     const response = await fetch('https://api.xendit.co/sessions', {
       method: 'POST',
       headers: {
         Authorization: `Basic ${Buffer.from(`${process.env.XENDIT_SECRET_KEY}:`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        reference_id: referenceId,
-        session_type: 'PAY',
-        mode: 'PAYMENT_LINK',
-        amount,
-        currency: 'PHP',
-        country: 'PH',
-        capture_method: 'AUTOMATIC',
-        locale: 'en',
-        description: `GroceLiver order for ${normalizedName}`,
-        items: validatedItems.map((item) => ({
-          reference_id: String(item.id),
-          type: 'PHYSICAL_PRODUCT',
-          name: item.name,
-          category: item.category,
-          net_unit_amount: item.price,
-          quantity: item.quantity,
-          currency: 'PHP'
-        })),
-        success_return_url: `${returnUrl.toString()}&payment=success`,
-        cancel_return_url: `${returnUrl.toString()}&payment=cancel`,
-        metadata: { order_reference: referenceId }
-      })
+      body: JSON.stringify(sessionRequest)
     });
 
     const payload = await response.json().catch(() => ({}));

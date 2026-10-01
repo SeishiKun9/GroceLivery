@@ -17,25 +17,19 @@ Then open:
 http://localhost:3000
 ```
 
-To enable Xendit hosted checkout, copy `.env.example` to `.env` and add your Xendit secret key:
-
-```bash
-copy .env.example .env
-```
-
-Then update:
+To enable Xendit hosted checkout, create a private `.env` file in the project folder containing only your Xendit secret key:
 
 ```env
 XENDIT_SECRET_KEY=your_xendit_secret_key_here
-APP_BASE_URL=https://your-public-https-domain.example
 ```
 
-`APP_BASE_URL` must be a public HTTPS URL for Xendit's checkout return links. Without `XENDIT_SECRET_KEY`, checkout creates clearly labeled demo orders and does not take payment. Live orders remain pending until the server verifies the Xendit session.
+Keep `.env` private; it is ignored by Git. Live Xendit checkout must be opened from the public HTTPS storefront; the server uses that same-origin URL for payment returns. Without `XENDIT_SECRET_KEY`, checkout creates clearly labeled demo orders and does not take payment. Live orders remain pending until the server verifies the Xendit session.
 
 ## Files
 
 - `index.html` - storefront landing page
-- `login.html` - sign up and login screens
+- `login.html` - customer login
+- `signup.html` - customer registration
 - `products.html` - grocery catalog and filters
 - `cart.html` - cart summary and quantity controls
 - `checkout.html` - customer checkout and Xendit hosted payment flow

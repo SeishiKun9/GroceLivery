@@ -88,18 +88,20 @@ app.post('/api/payments/create-session', async (req, res) => {
     });
   }
 
-  let appBaseUrl;
+  let returnUrl;
   try {
-    appBaseUrl = new URL(process.env.APP_BASE_URL || '');
+    const origin = req.get('origin');
+    const appOrigin = new URL(origin || '');
+
+    if (appOrigin.protocol !== 'https:' || appOrigin.origin !== origin || appOrigin.host.toLowerCase() !== req.get('host')?.toLowerCase()) {
+      return res.status(503).json({ message: 'Open checkout from the public HTTPS storefront to use Xendit.' });
+    }
+
+    returnUrl = new URL('/orders.html', appOrigin.origin);
   } catch {
-    return res.status(503).json({ message: 'Set APP_BASE_URL to your public HTTPS app URL to enable Xendit checkout.' });
+    return res.status(503).json({ message: 'Open checkout from the public HTTPS storefront to use Xendit.' });
   }
 
-  if (appBaseUrl.protocol !== 'https:') {
-    return res.status(503).json({ message: 'APP_BASE_URL must use HTTPS for Xendit checkout redirects.' });
-  }
-
-  const returnUrl = new URL('/orders.html', appBaseUrl);
   returnUrl.searchParams.set('reference_id', referenceId);
 
   try {

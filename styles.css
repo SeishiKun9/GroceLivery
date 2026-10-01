@@ -1669,3 +1669,8 @@ select:focus {
     text-align: left;
   }
 }
+
+.auth-single {
+  grid-template-columns: minmax(0, 560px);
+  justify-content: center;
+}

@@ -890,7 +890,7 @@ function init() {
     handleXenditReturn();
   }
 
-  if (path === 'login.html' || path === 'index.html' || path === '') {
+  if (path === 'login.html' || path === 'signup.html') {
     handleAuthForms();
   }
 

@@ -1,0 +1,21 @@
+{
+  "name": "groceliver",
+  "version": "1.0.0",
+  "description": "GroceLiver grocery delivery web app with PayMongo integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "groceliver",
+    "ecommerce",
+    "grocery",
+    "paymongo"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.19.2"
+  }
+}

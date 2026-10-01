@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GroceLiver | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-shell">
+        <a class="brand" href="index.html" aria-label="GroceLiver home">
+          <span class="brand-mark">G</span>
+          <span>GroceLiver</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href="index.html">Home</a>
+          <a href="products.html">Products</a>
+          <a href="cart.html">Cart</a>
+          <a href="orders.html">Orders</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a id="login-link" class="nav-link" href="login.html">Login</a>
+          <a class="button button-primary" href="products.html">Shop now</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <div class="container">
+        <div class="page-heading account-heading">
+          <p class="eyebrow">Good to have you here</p>
+          <h1>Your GroceLiver account</h1>
+          <p>Sign in to pick up where you left off, or create an account to start shopping.</p>
+        </div>
+        <div class="auth-layout">
+        <section class="auth-card">
+          <h2>Create your account</h2>
+          <form id="register-form" class="form-grid">
+            <div class="field">
+              <label for="register-name">Full name</label>
+              <input id="register-name" name="name" type="text" placeholder="Juan Dela Cruz" required />
+            </div>
+
+            <div class="field">
+              <label for="register-email">Email</label>
+              <input id="register-email" name="email" type="email" placeholder="juan@email.com" required />
+            </div>
+
+            <div class="field">
+              <label for="register-password">Password</label>
+              <input id="register-password" name="password" type="password" placeholder="At least 6 characters" required />
+            </div>
+
+            <div class="input-row">
+              <div class="field">
+                <label for="register-phone">Contact number</label>
+                <input id="register-phone" name="phone" type="tel" placeholder="0917-123-4567" required />
+              </div>
+              <div class="field">
+                <label for="register-address">Delivery address</label>
+                <input id="register-address" name="address" type="text" placeholder="123 Main St" required />
+              </div>
+            </div>
+
+            <p id="register-message" class="form-message" aria-live="polite"></p>
+
+            <div class="form-actions">
+              <button type="submit" class="button button-primary">Sign up</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="auth-card">
+          <h2>Welcome back</h2>
+          <form id="login-form" class="form-grid">
+            <div class="field">
+              <label for="login-email">Email</label>
+              <input id="login-email" name="email" type="email" placeholder="Enter your email" required />
+            </div>
+
+            <div class="field">
+              <label for="login-password">Password</label>
+              <input id="login-password" name="password" type="password" placeholder="Enter your password" required />
+            </div>
+
+            <p id="login-message" class="form-message" aria-live="polite"></p>
+
+            <div class="form-actions">
+              <button type="submit" class="button button-primary">Login</button>
+            </div>
+          </form>
+          <p class="muted-text auth-note">Use your saved GroceLiver account to continue shopping.</p>
+        </section>
+        </div>
+      </div>
+    </main>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+    <script src="script.js"></script>
+  </body>
+</html>

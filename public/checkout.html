@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GroceLiver | Checkout</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-shell">
+        <a class="brand" href="index.html" aria-label="GroceLiver home">
+          <span class="brand-mark">G</span>
+          <span>GroceLiver</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href="index.html">Home</a>
+          <a href="products.html">Products</a>
+          <a href="cart.html">Cart</a>
+          <a href="orders.html">Orders</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a id="login-link" class="nav-link" href="login.html">Login</a>
+          <a class="button button-primary" href="cart.html">Back to cart</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <div class="container checkout-layout">
+        <section class="form-panel">
+          <div class="page-heading checkout-heading">
+            <p class="eyebrow">Almost there</p>
+            <h1>Checkout</h1>
+            <p>Where should we bring your groceries?</p>
+          </div>
+          <h2 class="section-title">Delivery details</h2>
+          <form id="checkout-form" class="form-grid">
+            <div class="field">
+              <label for="checkout-name">Full name</label>
+              <input id="checkout-name" name="name" type="text" required />
+            </div>
+
+            <div class="field">
+              <label for="checkout-email">Email</label>
+              <input id="checkout-email" name="email" type="email" required />
+            </div>
+
+            <div class="field">
+              <label for="checkout-phone">Phone</label>
+              <input id="checkout-phone" name="phone" type="tel" required />
+            </div>
+
+            <div class="field">
+              <label for="checkout-address">Delivery address</label>
+              <textarea id="checkout-address" name="address" rows="3" required></textarea>
+            </div>
+
+            <p id="checkout-message" class="form-message" aria-live="polite"></p>
+
+            <div class="checkout-box">
+              <p>Secure payment opens in Xendit checkout. Payment options depend on your Xendit account.</p>
+              <button class="button button-primary" type="submit">Continue to payment</button>
+            </div>
+          </form>
+        </section>
+
+        <aside id="checkout-summary"></aside>
+      </div>
+    </main>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+    <script src="script.js"></script>
+  </body>
+</html>

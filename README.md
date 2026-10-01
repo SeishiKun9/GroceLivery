@@ -17,6 +17,16 @@ Then open:
 http://localhost:3000
 ```
 
+## Deploy on Vercel
+
+Deploy the production site with:
+
+```bash
+vercel deploy --name grocelivery --prod
+```
+
+To enable Xendit checkout on the deployment, add `XENDIT_SECRET_KEY` in the Vercel project's Production environment and redeploy. Keep the key out of the repository; rotate any key that was previously exposed.
+
 To enable Xendit hosted checkout, create a private `.env` file in the project folder containing only your Xendit secret key:
 
 ```env

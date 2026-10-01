@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GroceLiver | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-shell">
+        <a class="brand" href="index.html" aria-label="GroceLiver home">
+          <span class="brand-mark">G</span>
+          <span>GroceLiver</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href="index.html">Home</a>
+          <a href="products.html">Products</a>
+          <a href="cart.html">Cart</a>
+          <a href="orders.html">Orders</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a id="login-link" class="nav-link" href="login.html">Login</a>
+          <a class="button button-primary" href="products.html">Shop now</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <div class="container">
+        <div class="page-heading account-heading">
+          <p class="eyebrow">Your account</p>
+          <h1>Welcome back</h1>
+          <p>Sign in to continue your grocery run.</p>
+        </div>
+        <div class="auth-layout auth-single">
+        <section class="auth-card">
+          <h2>Log in</h2>
+          <form id="login-form" class="form-grid">
+            <div class="field">
+              <label for="login-email">Email</label>
+              <input id="login-email" name="email" type="email" placeholder="Enter your email" required />
+            </div>
+
+            <div class="field">
+              <label for="login-password">Password</label>
+              <input id="login-password" name="password" type="password" placeholder="Enter your password" required />
+            </div>
+
+            <p id="login-message" class="form-message" aria-live="polite"></p>
+
+            <div class="form-actions">
+              <button type="submit" class="button button-primary">Login</button>
+            </div>
+          </form>
+          <p class="muted-text auth-note">New to GroceLiver? <a class="inline-link" href="signup.html">Create an account</a></p>
+        </section>
+        </div>
+      </div>
+    </main>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -104,8 +104,8 @@ const features = [
   },
   {
     icon: '💳',
-    title: 'PayMongo checkout',
-    text: 'The app includes a realistic payment experience in test mode and order status updates.'
+    title: 'Xendit checkout',
+    text: 'Secure hosted checkout with payment status verified before an order is marked paid.'
   },
   {
     icon: '⚠️',
@@ -560,18 +560,15 @@ function renderCheckoutPage() {
 
     clearFormMessage(messageNode);
 
-    fetch('/api/payments/create-intent', {
+    fetch('/api/payments/create-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        amount: Math.round(total * 100),
         items: items.map((item) => ({
           id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price
+          quantity: item.quantity
         })),
         name,
         email,
@@ -586,15 +583,44 @@ function renderCheckoutPage() {
           throw new Error(data?.message || 'Payment could not be processed.');
         }
 
+        if (data.mode === 'live') {
+          if (!data.checkoutUrl || !data.paymentSessionId || !data.referenceId) {
+            throw new Error('Xendit did not return a valid checkout session.');
+          }
+
+          const order = {
+            id: `GL-${Date.now()}`,
+            referenceId: data.referenceId,
+            paymentSessionId: data.paymentSessionId,
+            customer: name,
+            email,
+            total: data.amount,
+            status: 'Pending',
+            createdAt: new Date().toISOString(),
+            paymentMethod: 'Xendit',
+            items: items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price
+            }))
+          };
+
+          const orders = getOrders();
+          orders.unshift(order);
+          saveOrders(orders);
+          window.location.href = data.checkoutUrl;
+          return;
+        }
+
         const order = {
           id: `GL-${Date.now()}`,
+          referenceId: data.referenceId,
           customer: name,
           email,
-          total,
-          status: 'Paid',
+          total: data.amount || total,
+          status: 'Demo',
           createdAt: new Date().toISOString(),
-          paymentId: data.paymentId || `demo_${Date.now()}`,
-          paymentMethod: 'PayMongo Test',
+          paymentMethod: 'Xendit Demo',
           items: items.map((item) => ({
             name: item.name,
             quantity: item.quantity,
@@ -608,14 +634,14 @@ function renderCheckoutPage() {
         saveCart([]);
         updateCartCounter();
 
-        setFormMessage(messageNode, data.message || 'Payment complete.', 'success');
-        showToast(data.message || 'Payment complete.');
+        setFormMessage(messageNode, data.message || 'Demo order created; no payment was taken.', 'success');
+        showToast(data.message || 'Demo order created; no payment was taken.');
         window.location.href = 'orders.html';
       })
       .catch((error) => {
         if (submitButton) {
           submitButton.disabled = false;
-          submitButton.textContent = 'Pay now';
+          submitButton.textContent = 'Continue to payment';
         }
         setFormMessage(messageNode, error.message || 'Payment could not be processed.', 'error');
         showToast(error.message || 'Payment could not be processed.');
@@ -633,7 +659,7 @@ function renderOrdersPage() {
     ordersRoot.innerHTML = `
       <div class="orders-empty">
         <h3>No orders yet</h3>
-        <p>Your paid grocery orders will appear here after checkout.</p>
+        <p>Your grocery orders will appear here after checkout.</p>
       </div>
     `;
     return;
@@ -656,6 +682,61 @@ function renderOrdersPage() {
       `
     )
     .join('');
+}
+
+function handleXenditReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const referenceId = params.get('reference_id');
+  const paymentResult = params.get('payment');
+
+  if (!referenceId || !paymentResult) return;
+
+  const orders = getOrders();
+  const order = orders.find((item) => item.referenceId === referenceId);
+
+  if (!order) {
+    showToast('We could not find the order for this payment.');
+    return;
+  }
+
+  if (paymentResult === 'cancel') {
+    order.status = 'Cancelled';
+    saveOrders(orders);
+    renderOrdersPage();
+    showToast('Payment was cancelled. Your cart is still saved.');
+    window.history.replaceState({}, '', 'orders.html');
+    return;
+  }
+
+  if (paymentResult !== 'success' || !order.paymentSessionId) return;
+
+  fetch('/api/payments/verify-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      paymentSessionId: order.paymentSessionId,
+      referenceId
+    })
+  })
+    .then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || 'Unable to verify payment.');
+
+      if (data.paid) {
+        order.status = 'Paid';
+        order.paymentId = data.paymentId;
+        saveOrders(orders);
+        saveCart([]);
+        updateCartCounter();
+        renderOrdersPage();
+        showToast('Xendit payment verified. Order confirmed.');
+        window.history.replaceState({}, '', 'orders.html');
+        return;
+      }
+
+      showToast('Payment is not confirmed yet. Your order remains pending.');
+    })
+    .catch((error) => showToast(error.message || 'Unable to verify payment.'));
 }
 
 function handleAuthForms() {
@@ -806,6 +887,7 @@ function init() {
   if (path === 'orders.html') {
     ensureAuth();
     renderOrdersPage();
+    handleXenditReturn();
   }
 
   if (path === 'login.html' || path === 'index.html' || path === '') {

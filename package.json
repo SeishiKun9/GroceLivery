@@ -1,7 +1,7 @@
 {
   "name": "groceliver",
   "version": "1.0.0",
-  "description": "GroceLiver grocery delivery web app with PayMongo integration",
+  "description": "GroceLiver grocery delivery web app with Xendit checkout",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,7 +11,7 @@
     "groceliver",
     "ecommerce",
     "grocery",
-    "paymongo"
+    "xendit"
   ],
   "license": "MIT",
   "dependencies": {

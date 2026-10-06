@@ -33,7 +33,7 @@ Keep `.env` private; it is ignored by Git. Live Xendit checkout must be opened f
 - `products.html` - grocery catalog and filters
 - `cart.html` - cart summary and quantity controls
 - `checkout.html` - customer checkout and Xendit hosted payment flow
-- `orders.html` - order history
+- `orders.html` - order history and delivery tracking preview
 - `styles.css` - minimal grocery storefront styling
 - `script.js` - app logic, validation, cart, checkout, and order management
 - `server.js` - static site server and Xendit payment session/verification API
@@ -41,3 +41,5 @@ Keep `.env` private; it is ignored by Git. Live Xendit checkout must be opened f
 ## Notes
 
 The app is built around the proposal's core customer journey: secure sign-up, grocery browsing, cart updates, order history, and Xendit hosted checkout. Product and category photos are stored locally in `assets/images`; image credits and licenses are listed in `assets/images/ATTRIBUTION.md`.
+
+Confirmed and demo orders show a delivery preview with the assigned driver, Ace Arcamo, and a Yadea G5 electric motorcycle. The map is illustrative only; live GPS tracking and delivery status updates are not connected.

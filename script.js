@@ -91,6 +91,13 @@ const productImages = {
   8: 'assets/images/bakery.jpg'
 };
 
+const deliveryDriver = {
+  name: 'Ace Arcamo',
+  phone: '09876276351',
+  vehicle: 'Yadea G5 electric motorcycle',
+  vehicleColor: 'Forest green'
+};
+
 const features = [
   {
     icon: '🔐',
@@ -675,8 +682,10 @@ function renderOrdersPage() {
 
   ordersRoot.innerHTML = orders
     .map(
-      (order) => `
-        <article class="order-card">
+      (order) => {
+        const showDeliveryTracking = order.status === 'Paid' || order.status === 'Demo';
+        return `
+        <article class="order-card${showDeliveryTracking ? ' order-card-tracked' : ''}">
           <div>
             <strong>${order.id}</strong>
             <div class="order-meta">${new Date(order.createdAt).toLocaleString()}</div>
@@ -692,8 +701,50 @@ function renderOrdersPage() {
               </div>
             ` : ''}
           </div>
+          ${showDeliveryTracking ? `
+            <section class="delivery-tracking" aria-label="Delivery tracking for ${order.id}">
+              <div class="tracking-heading">
+                <div>
+                  <p class="eyebrow">Delivery update</p>
+                  <h2>Your driver is assigned</h2>
+                </div>
+                <span class="tracking-state"><span class="live-dot" aria-hidden="true"></span> Driver assigned</span>
+              </div>
+              <div class="tracking-content">
+                <div class="tracking-map" role="img" aria-label="Illustrative route preview from the grocery store to your delivery address. The driver's position is not live.">
+                  <svg viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                    <rect width="800" height="300" fill="#e9f0df"></rect>
+                    <path d="M0 58H800M0 235H800M110 0V300M365 0V300M640 0V300" stroke="#fff" stroke-width="24"></path>
+                    <path d="M0 58H800M0 235H800M110 0V300M365 0V300M640 0V300" stroke="#d4dfd1" stroke-width="2" stroke-dasharray="7 8"></path>
+                    <path d="M42 150H226V95H480V178H730" fill="none" stroke="#3d9560" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 0"></path>
+                    <circle cx="226" cy="150" r="20" fill="#fff" stroke="#267144" stroke-width="5"></circle>
+                    <text x="226" y="156" text-anchor="middle" font-size="17" font-weight="700" fill="#267144">A</text>
+                    <circle cx="480" cy="95" r="23" fill="#267144" stroke="#fff" stroke-width="5"></circle>
+                    <text x="480" y="102" text-anchor="middle" font-size="19" fill="#fff">↗</text>
+                    <circle cx="730" cy="178" r="20" fill="#fff" stroke="#267144" stroke-width="5"></circle>
+                    <text x="730" y="184" text-anchor="middle" font-size="17" font-weight="700" fill="#267144">B</text>
+                    <text x="174" y="193" font-size="14" font-weight="600" fill="#31583d">Store</text>
+                    <text x="669" y="220" font-size="14" font-weight="600" fill="#31583d">Your address</text>
+                  </svg>
+                  <span class="map-caption">Illustrative route · not live GPS</span>
+                </div>
+                <div class="driver-card">
+                  <div class="driver-avatar" aria-hidden="true">AA</div>
+                  <div class="driver-details">
+                    <span class="driver-label">Driver / deliverer</span>
+                    <strong>${deliveryDriver.name}</strong>
+                    <a href="tel:${deliveryDriver.phone}">${deliveryDriver.phone}</a>
+                    <span class="driver-vehicle">${deliveryDriver.vehicle}</span>
+                    <span class="driver-vehicle">${deliveryDriver.vehicleColor}</span>
+                  </div>
+                </div>
+              </div>
+              <p class="tracking-note">This route is a visual preview. Live driver location and delivery updates are not connected yet.</p>
+            </section>
+          ` : ''}
         </article>
-      `
+      `;
+      }
     )
     .join('');
 }

@@ -1467,6 +1467,138 @@ select:focus {
   box-shadow: none;
 }
 
+.order-card-tracked {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+}
+
+.delivery-tracking {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--line);
+}
+
+.tracking-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.tracking-heading .eyebrow {
+  margin-bottom: 0.3rem;
+  font-size: 0.68rem;
+}
+
+.tracking-heading h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.tracking-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 0 0 auto;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  background: var(--green-50);
+  color: var(--green-800);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.tracking-state .live-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  box-shadow: 0 0 0 5px rgba(47, 210, 107, 0.12);
+}
+
+.tracking-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr);
+  gap: 1rem;
+}
+
+.tracking-map {
+  position: relative;
+  min-height: 230px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #e9f0df;
+}
+
+.tracking-map svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 230px;
+}
+
+.map-caption {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.driver-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: var(--green-50);
+}
+
+.driver-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--green-800);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.driver-details {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.driver-label,
+.driver-vehicle {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.driver-details a {
+  width: fit-content;
+  color: var(--green-700);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tracking-note {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 .order-card strong {
   font-size: 0.95rem;
 }
@@ -1583,6 +1715,10 @@ select:focus {
     align-items: flex-start;
   }
 
+  .tracking-content {
+    grid-template-columns: 1fr;
+  }
+
   .order-card > div:last-child {
     text-align: right;
   }
@@ -1671,6 +1807,16 @@ select:focus {
   }
 
   .order-card {
+    flex-direction: column;
+  }
+
+  .order-card-tracked {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .tracking-heading {
+    align-items: flex-start;
     flex-direction: column;
   }
 

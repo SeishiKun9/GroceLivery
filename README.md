@@ -25,7 +25,7 @@ Deploy the production site with:
 vercel deploy --name grocelivery --prod
 ```
 
-To enable Xendit checkout on the deployment, add `XENDIT_SECRET_KEY` in the Vercel project's Production environment and redeploy. Keep the key out of the repository; rotate any key that was previously exposed.
+Vercel serves the storefront from `public/` and runs the payment API as serverless functions in `api/`. Add `XENDIT_SECRET_KEY` in the Vercel project's **Settings > Environment Variables**, enable it for Production (and Preview if needed), then redeploy the affected deployment. Do not put the key in frontend settings or commit it to the repository; rotate any key that was previously exposed.
 
 To enable Xendit hosted checkout, create a private `.env` file in the project folder containing only your Xendit secret key:
 

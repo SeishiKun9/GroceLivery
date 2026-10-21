@@ -98,6 +98,21 @@ const deliveryDriver = {
   vehicleColor: 'Forest green'
 };
 
+// Simulated delivery timeline, in minutes after payment is confirmed.
+const deliveryStages = [
+  { key: 'confirmed', label: 'Order confirmed', title: 'Payment received', startsAt: 0 },
+  { key: 'preparing', label: 'Preparing groceries', title: 'Your groceries are being packed', startsAt: 1 },
+  { key: 'picked-up', label: 'Rider picked up', title: `${deliveryDriver.name} picked up your order`, startsAt: 6 },
+  { key: 'on-the-way', label: 'On the way', title: 'Your rider is on the way', startsAt: 8 },
+  { key: 'delivered', label: 'Delivered', title: 'Your groceries have arrived', startsAt: 25 }
+];
+
+// Map coordinates (SVG viewBox 800x300): rider heads to the store, then follows the route to the customer.
+const riderApproachPoints = [[42, 150], [226, 150]];
+const deliveryRoutePoints = [[226, 150], [226, 95], [480, 95], [480, 178], [730, 178]];
+
+const DELIVERY_REFRESH_MS = 15000;
+
 const features = [
   {
     icon: '🔐',
@@ -664,6 +679,147 @@ function renderCheckoutPage() {
   });
 }
 
+function isDeliveryTracked(order) {
+  return order.status === 'Paid' || order.status === 'Demo';
+}
+
+function getStageStart(key) {
+  return deliveryStages.find((stage) => stage.key === key).startsAt;
+}
+
+function clampProgress(value) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function getRouteLength(points) {
+  return points.slice(1).reduce((length, [x, y], index) => {
+    const [prevX, prevY] = points[index];
+    return length + Math.hypot(x - prevX, y - prevY);
+  }, 0);
+}
+
+function getPointAlongRoute(points, progress) {
+  let remaining = progress * getRouteLength(points);
+
+  for (let index = 1; index < points.length; index += 1) {
+    const [x1, y1] = points[index - 1];
+    const [x2, y2] = points[index];
+    const segmentLength = Math.hypot(x2 - x1, y2 - y1);
+
+    if (remaining <= segmentLength) {
+      const ratio = segmentLength ? remaining / segmentLength : 0;
+      return { x: x1 + (x2 - x1) * ratio, y: y1 + (y2 - y1) * ratio };
+    }
+
+    remaining -= segmentLength;
+  }
+
+  const [x, y] = points[points.length - 1];
+  return { x, y };
+}
+
+function getDeliveryProgress(order) {
+  const startedAt = new Date(order.paidAt || order.createdAt).getTime();
+  const elapsedMinutes = Math.max(0, (Date.now() - startedAt) / 60000);
+  const stageIndex = deliveryStages.reduce(
+    (current, stage, index) => (elapsedMinutes >= stage.startsAt ? index : current),
+    0
+  );
+  const deliveredAtMinutes = getStageStart('delivered');
+  const travelStart = getStageStart('on-the-way');
+  const pickupAt = getStageStart('picked-up');
+  const preparingAt = getStageStart('preparing');
+
+  return {
+    stageIndex,
+    stage: deliveryStages[stageIndex],
+    isDelivered: stageIndex === deliveryStages.length - 1,
+    approachProgress: clampProgress((elapsedMinutes - preparingAt) / (pickupAt - preparingAt)),
+    routeProgress: clampProgress((elapsedMinutes - travelStart) / (deliveredAtMinutes - travelStart)),
+    minutesLeft: Math.max(1, Math.ceil(deliveredAtMinutes - elapsedMinutes)),
+    deliveredAt: new Date(startedAt + deliveredAtMinutes * 60000)
+  };
+}
+
+function renderDeliveryTracking(order) {
+  const progress = getDeliveryProgress(order);
+  const hasPickedUp = progress.stageIndex >= deliveryStages.findIndex((stage) => stage.key === 'picked-up');
+  const rider = hasPickedUp
+    ? getPointAlongRoute(deliveryRoutePoints, progress.routeProgress)
+    : getPointAlongRoute(riderApproachPoints, progress.approachProgress);
+  const routeLength = getRouteLength(deliveryRoutePoints);
+  const travelled = routeLength * progress.routeProgress;
+  const toPolyline = (points) => points.map(([x, y]) => `${x},${y}`).join(' ');
+  const driverInitials = deliveryDriver.name.split(' ').map((part) => part[0]).join('').slice(0, 2);
+  const stateLabel = progress.isDelivered
+    ? `Delivered ${progress.deliveredAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+    : `Arriving in ~${progress.minutesLeft} min`;
+
+  return `
+    <section class="delivery-tracking" aria-label="Delivery tracking for ${order.id}">
+      <div class="tracking-heading">
+        <div>
+          <p class="eyebrow">Delivery update</p>
+          <h2>${progress.stage.title}</h2>
+        </div>
+        <span class="tracking-state${progress.isDelivered ? ' is-delivered' : ''}">
+          ${progress.isDelivered ? '' : '<span class="live-dot" aria-hidden="true"></span>'} ${stateLabel}
+        </span>
+      </div>
+      <ol class="tracking-steps">
+        ${deliveryStages
+          .map((stage, index) => {
+            const stepState = index < progress.stageIndex || progress.isDelivered
+              ? 'is-done'
+              : index === progress.stageIndex ? 'is-current' : '';
+            return `
+              <li class="tracking-step ${stepState}"${index === progress.stageIndex ? ' aria-current="step"' : ''}>
+                <span class="step-dot" aria-hidden="true"></span>
+                <span class="step-label">${stage.label}</span>
+              </li>
+            `;
+          })
+          .join('')}
+      </ol>
+      <div class="tracking-content">
+        <div class="tracking-map" role="img" aria-label="Route from the grocery store to your delivery address. Rider status: ${progress.stage.label}. Simulated progress, not live GPS.">
+          <svg viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <rect width="800" height="300" fill="#e9f0df"></rect>
+            <path d="M0 58H800M0 235H800M110 0V300M365 0V300M640 0V300" stroke="#fff" stroke-width="24"></path>
+            <path d="M0 58H800M0 235H800M110 0V300M365 0V300M640 0V300" stroke="#d4dfd1" stroke-width="2" stroke-dasharray="7 8"></path>
+            ${hasPickedUp ? '' : `<polyline points="${toPolyline(riderApproachPoints)}" fill="none" stroke="#9cc5a8" stroke-width="5" stroke-linecap="round" stroke-dasharray="4 10"></polyline>`}
+            <polyline points="${toPolyline(deliveryRoutePoints)}" fill="none" stroke="#b9d8c2" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            <polyline points="${toPolyline(deliveryRoutePoints)}" fill="none" stroke="#267144" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${travelled} ${routeLength}"></polyline>
+            <circle cx="226" cy="150" r="20" fill="#fff" stroke="#267144" stroke-width="5"></circle>
+            <text x="226" y="156" text-anchor="middle" font-size="17" font-weight="700" fill="#267144">A</text>
+            <circle cx="730" cy="178" r="20" fill="#fff" stroke="#267144" stroke-width="5"></circle>
+            <text x="730" y="184" text-anchor="middle" font-size="17" font-weight="700" fill="#267144">B</text>
+            <text x="174" y="193" font-size="14" font-weight="600" fill="#31583d">Store</text>
+            <text x="669" y="220" font-size="14" font-weight="600" fill="#31583d">Your address</text>
+            ${progress.isDelivered ? '' : `
+              <circle class="rider-pulse" cx="${rider.x}" cy="${rider.y}" r="30" fill="#2fd26b" opacity="0.25"></circle>
+              <circle cx="${rider.x}" cy="${rider.y}" r="23" fill="#267144" stroke="#fff" stroke-width="5"></circle>
+              <text x="${rider.x}" y="${rider.y + 7}" text-anchor="middle" font-size="20">🛵</text>
+            `}
+          </svg>
+          <span class="map-caption">Simulated progress · not live GPS</span>
+        </div>
+        <div class="driver-card">
+          <div class="driver-avatar" aria-hidden="true">${driverInitials}</div>
+          <div class="driver-details">
+            <span class="driver-label">Your delivery rider</span>
+            <strong>${deliveryDriver.name}</strong>
+            <a href="tel:${deliveryDriver.phone}">${deliveryDriver.phone}</a>
+            <span class="driver-vehicle">${deliveryDriver.vehicle}</span>
+            <span class="driver-vehicle">${deliveryDriver.vehicleColor}</span>
+          </div>
+        </div>
+      </div>
+      <p class="tracking-note">Delivery progress is estimated from your payment time and updates automatically. Live rider GPS is not connected yet.</p>
+    </section>
+  `;
+}
+
 function renderOrdersPage() {
   const ordersRoot = document.getElementById('orders-list');
   if (!ordersRoot) return;
@@ -683,7 +839,7 @@ function renderOrdersPage() {
   ordersRoot.innerHTML = orders
     .map(
       (order) => {
-        const showDeliveryTracking = order.status === 'Paid' || order.status === 'Demo';
+        const showDeliveryTracking = isDeliveryTracked(order);
         return `
         <article class="order-card${showDeliveryTracking ? ' order-card-tracked' : ''}">
           <div>
@@ -701,47 +857,7 @@ function renderOrdersPage() {
               </div>
             ` : ''}
           </div>
-          ${showDeliveryTracking ? `
-            <section class="delivery-tracking" aria-label="Delivery tracking for ${order.id}">
-              <div class="tracking-heading">
-                <div>
-                  <p class="eyebrow">Delivery update</p>
-                  <h2>Your driver is assigned</h2>
-                </div>
-                <span class="tracking-state"><span class="live-dot" aria-hidden="true"></span> Driver assigned</span>
-              </div>
-              <div class="tracking-content">
-                <div class="tracking-map" role="img" aria-label="Illustrative route preview from the grocery store to your delivery address. The driver's position is not live.">
-                  <svg viewBox="0 0 800 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-                    <rect width="800" height="300" fill="#e9f0df"></rect>
-                    <path d="M0 58H800M0 235H800M110 0V300M365 0V300M640 0V300" stroke="#fff" stroke-width="24"></path>
-                    <path d="M0 58H800M0 235H800M110 0V300M365 0V300M640 0V300" stroke="#d4dfd1" stroke-width="2" stroke-dasharray="7 8"></path>
-                    <path d="M42 150H226V95H480V178H730" fill="none" stroke="#3d9560" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 0"></path>
-                    <circle cx="226" cy="150" r="20" fill="#fff" stroke="#267144" stroke-width="5"></circle>
-                    <text x="226" y="156" text-anchor="middle" font-size="17" font-weight="700" fill="#267144">A</text>
-                    <circle cx="480" cy="95" r="23" fill="#267144" stroke="#fff" stroke-width="5"></circle>
-                    <text x="480" y="102" text-anchor="middle" font-size="19" fill="#fff">↗</text>
-                    <circle cx="730" cy="178" r="20" fill="#fff" stroke="#267144" stroke-width="5"></circle>
-                    <text x="730" y="184" text-anchor="middle" font-size="17" font-weight="700" fill="#267144">B</text>
-                    <text x="174" y="193" font-size="14" font-weight="600" fill="#31583d">Store</text>
-                    <text x="669" y="220" font-size="14" font-weight="600" fill="#31583d">Your address</text>
-                  </svg>
-                  <span class="map-caption">Illustrative route · not live GPS</span>
-                </div>
-                <div class="driver-card">
-                  <div class="driver-avatar" aria-hidden="true">AA</div>
-                  <div class="driver-details">
-                    <span class="driver-label">Driver / deliverer</span>
-                    <strong>${deliveryDriver.name}</strong>
-                    <a href="tel:${deliveryDriver.phone}">${deliveryDriver.phone}</a>
-                    <span class="driver-vehicle">${deliveryDriver.vehicle}</span>
-                    <span class="driver-vehicle">${deliveryDriver.vehicleColor}</span>
-                  </div>
-                </div>
-              </div>
-              <p class="tracking-note">This route is a visual preview. Live driver location and delivery updates are not connected yet.</p>
-            </section>
-          ` : ''}
+          ${showDeliveryTracking ? renderDeliveryTracking(order) : ''}
         </article>
       `;
       }
@@ -789,6 +905,7 @@ function handleXenditReturn() {
 
       if (data.paid) {
         order.status = 'Paid';
+        order.paidAt = new Date().toISOString();
         order.paymentId = data.paymentId;
         saveOrders(orders);
         saveCart([]);
@@ -953,6 +1070,12 @@ function init() {
     ensureAuth();
     renderOrdersPage();
     handleXenditReturn();
+    setInterval(() => {
+      const hasActiveDelivery = getOrders().some(
+        (order) => isDeliveryTracked(order) && !getDeliveryProgress(order).isDelivered
+      );
+      if (hasActiveDelivery) renderOrdersPage();
+    }, DELIVERY_REFRESH_MS);
   }
 
   if (path === 'login.html' || path === 'signup.html') {
